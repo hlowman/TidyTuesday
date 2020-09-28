@@ -5,7 +5,7 @@ All data and scripts covered in the following sessions are included in the folde
 
 *Syllabus*
 
-Week 1: [Intro to R] (https://vimeo.com/447182978)
+Week 1: [Intro to R](https://vimeo.com/447182978)
 
 Week 2: Basics of tidying data
 
