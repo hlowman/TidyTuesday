@@ -1,0 +1,152 @@
+---
+title: "Markdown Tutorial"
+author: "Heili Lowman"
+date: "8/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button (at the top of this pane) a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r test, include = TRUE}
+
+# Create a variable.
+bird <- 14
+
+fish <- 8 + 9
+
+```
+
+We just created a new variable called "bird".
+
+Anything written in a code chunk is run as code, and any comments within them need to be preceded by a `#`.
+Anything written outside code chunks is simply evaluated as text, as we tested with the variable: 
+bird <- 20
+
+Insert a new code chunk by clicking **Insert** > **R** at the top of this pane. Or, you can use the following shortcuts:
+
+- Mac:`cmd+opt+I`
+
+- PC:`ctrl+alt+I`
+
+Use the following text in the `{r}` heading of your code chunk to achieve certain results:
+
+- `echo = FALSE` to hide the code but show the output
+- `include = FALSE` to hide both the code and the output
+- `eval = FALSE` to neither run nor display the code/output from a given code chunk
+- `message = FALSE` to hide any messages that result from running the code
+- `warning = FALSE` to hide any warnings that result from running the code
+- `fig.cap = "Insert Figure Caption Here"` to add a figure caption that might result from your code
+
+### Headings
+
+#### Smaller heading
+
+**Bold**
+
+*Italicized*
+
+* Create a list.
+* List item #2.
+
+## Standard Workflow
+
+### Data
+
+```{r data, include = FALSE, message = FALSE, warning = FALSE}
+
+# Load the tidyverse.
+library(tidyverse)
+
+# Load the dataset.
+chemistry <- read_csv("tbl_chemresults.csv")
+
+# We have commented out the below commands, because we don't actually want their output to be included in the knit. As an alternative, you can simply run these commands in the console.
+
+# Take a look at the data.
+# View(chemistry)
+
+# Examine data structure.
+# str(chemistry)
+
+```
+
+We have loaded in the dataset and taken a look at it.
+
+### Figures
+
+Figure structure:
+
+ggplot() = builds the plot using your data
+
+geom_*() = tells R what kind of plot (bar, point, boxplot, etc.)
+
+aes() = control your variables and aesthetics (color, shape, etc.)
+
+*Facets Exercise*
+
+```{r facets, echo = FALSE}
+
+metals <- chemistry %>% # original dataset
+  filter(analytename == "Copper" | analytename == "Lead" | analytename == "Zinc") %>%
+  filter(sampletype == "Result" & qualifier == "none")
+
+# Filtered out metals and samples only.
+
+metals_summary <- metals %>%
+  group_by(analytename, lab) %>%
+  summarize(mean_conc = mean(result)) %>%
+  ungroup() # Don't forget!!
+
+# Calculated mean concentrations by analyte and laboratory.
+
+fig1 <- ggplot(data = metals_summary) + # base plot
+  geom_bar(aes(x = lab, y = mean_conc, fill = lab), stat = "identity") + # bar plot requires stat = "identity" when data is not counts
+  facet_wrap(~analytename) + # facet by analyte
+  labs( x = "Analytical Laboratory",
+    y = "Mean Result (ug/g dry weight)",
+    title = "Mean Metals by Laboratory",
+    subtitle = "Bight 2018",
+    caption = "Data Source: Dr. Bowen Du, SCCWRP") + # adds labels
+  theme_bw() + # removes grey background
+  theme(axis.text.x=element_blank()) # removes x axis labels
+
+fig1
+
+```
+
+
+*Boxplots Exercise*
+
+```{r boxplot, echo = FALSE}
+
+toxic <- chemistry %>%
+  filter(analytename == "Arsenic" | analytename == "Chromium" | analytename == "Nickel") %>%
+  filter(sampletype == "Result" & qualifier == "none")
+
+# Created new dataset.
+
+fig2 <- ggplot(data = toxic) + # base plot
+  geom_boxplot(aes(x = analytename, y = result, color = analytename)) + # first geometry generates boxplots
+  scale_color_manual(values = c("darkorange", "purple", "cyan4")) + # customizes colors
+  geom_jitter(aes(x = analytename, y = result), width = 0.2, alpha = 0.1) + # second geometry generates points
+  labs(x = "Analyte",
+    y = "Result (ug/g dry weight)",
+    title = "Toxic Compounds in Sediment",
+    subtitle = "Bight 2018",
+    caption = "Data Source: Dr. Bowen Du, SCCWRP",
+    colors = "Analytes") + # adds labels
+  theme_classic() # removes grey baackground and gridlines
+
+fig2
+
+```
+
+*End of RMarkdown document.*

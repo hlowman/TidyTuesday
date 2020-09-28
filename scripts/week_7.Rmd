@@ -1,0 +1,185 @@
+---
+title: "forcats Tutorial"
+author: "Heili Lowman"
+date: "9/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown "forcats" tutorial
+
+The following document will walk through some functions within the `forcats` package that comes as part of the tidyverse.
+
+### Packages
+
+```{r, message = FALSE}
+# Load necessary packages.
+library(tidyverse)
+```
+
+### Data
+
+```{r, message = FALSE}
+# Load necessary data.
+#View(trees)
+
+trees_df <- trees # Save data to environment.
+```
+
+### Tidy
+
+```{r, message = FALSE}
+
+# Add a column of size classes.
+trees_df <- trees_df %>%
+  mutate(SizeClass = case_when( # adding in a new column
+    Height < 65 ~ "XS",
+    Height >= 65 & Height < 70 ~ "S",
+    Height >= 70 & Height < 75 ~ "M",
+    Height >= 75 & Height < 80 ~ "L",
+    Height >= 80 ~ "XL"
+  ))
+
+#str(trees_df) # examines structure.
+
+# factor()
+trees_df <- trees_df %>%
+  mutate(SizeClassF = factor(SizeClass)) # make new factor column
+  
+#str(trees_df)  
+
+trees_df$SizeClassF <- factor(trees_df$SizeClass) # achieves the same result as the pipe above.
+
+# levels()
+levels(trees_df$SizeClassF)
+
+# fct_relevel()
+fct_relevel(trees_df$SizeClassF, c ("XS", "S", "M", "L", "XL")) # relevels our categories manually.
+
+trees_df <- trees_df %>%
+  mutate(SizeClassF = factor(SizeClass, levels = c("XS", "S", "M", "L", "XL"))) # achieves the same result as using fct_relevel.
+
+#str(trees_df)
+
+```
+
+### Exploration
+
+```{r, message = FALSE}
+
+# fct_count()
+count <- fct_count(trees_df$SizeClassF) # Counts number of observations in each level.
+
+# fct_unique()
+unique <- fct_unique(trees_df$SizeClassF) # Counts number of unique levels in a dataset.
+#View(unique)
+
+# Create a base boxplot of the data.
+
+boxplot1 <- trees_df %>% # Uses original dataset.
+  ggplot(aes(x = SizeClassF, y = Height, color = SizeClassF)) + # Sets the axes.
+  geom_boxplot() + # Creates a boxplot geometry.
+  labs(title = "Base Plot",
+    x = "Size Class",
+    y = "Height (ft)",
+    color = "Size Class",
+    caption = "Data Source: Ryan et al., 1976") + # Adds informative labels.
+  theme_classic() + # Removes grey background.
+  theme(legend.position = "none") # Removes legend.
+
+boxplot1
+
+# fct_infreq()
+# Sorts factors in descending order of frequency.
+
+boxplot2 <- trees_df %>%
+  mutate(SizeClassF = fct_infreq(SizeClassF)) %>%
+  ggplot(aes(x = SizeClassF, y = Height, color = SizeClassF)) +
+  geom_boxplot() +
+  labs(title = "Frequency Plot",
+    x = "Size Class",
+    y = "Height (ft)",
+    color = "Size Class",
+    caption = "Data Source: Ryan et al., 1976") +
+  theme_classic() +
+  theme(legend.position = "none") # Removes legend.
+
+boxplot2
+
+# fct_reorder()
+# Reorders factor column by another column.
+# ideally, there should be a 1:1 match between factors and other columns observations.
+# fct_reorder2() - allows you to reorder groups based on how their variables plot on a graph (in the x and y directions)
+
+boxplot3 <- trees_df %>%
+  mutate(SizeClassF = fct_reorder(SizeClassF, Volume)) %>%
+  ggplot(aes(x = SizeClassF, y = Height, color = SizeClassF)) +
+  geom_boxplot() +
+  labs(title = "Reordered by Volume Plot",
+    x = "Size Class",
+    y = "Height (ft)",
+    color = "Size Class",
+    caption = "Data Source: Ryan et al., 1976") +
+  theme_classic() +
+  theme(legend.position = "none") # Removes legend.
+
+boxplot3
+
+# fct_recode()
+# Manually reassign names of categories/factor levels.
+
+boxplot4 <- trees_df %>%
+  mutate(SizeClassF = fct_relevel(SizeClassF, c ("XS", "S", "M", "L", "XL"))) %>% # ensures ordering by size class
+  mutate(SizeClassF2 = fct_recode(SizeClassF, "X Small" = "XS", "Small" = "S", "Medium" = "M", "Large" = "L", "X Large" = "XL")) %>% # creates a new column with full names, still ordered
+  ggplot(aes(x = SizeClassF2, y = Height, color = SizeClassF2)) +
+  geom_boxplot() +
+  labs(title = "Renamed Plot",
+    x = "Size Class",
+    y = "Height (ft)",
+    color = "Size Class",
+    caption = "Data Source: Ryan et al., 1976") +
+  theme_classic() +
+  theme(legend.position = "none") # Removes legend.
+
+boxplot4
+
+#fct_other()
+# Select certain categories, and deem the rest as "other".
+
+boxplot5 <- trees_df %>%
+  mutate(SizeClassF3 = fct_other(SizeClassF, keep = c ("S", "M", "L"))) %>% # can also use drop, in this case drop = c("XS", "XL") to achieve an identical result.
+  ggplot(aes(x = SizeClassF3, y = Height, color = SizeClassF3)) +
+  geom_boxplot() +
+  labs(title = "Other Category Plot",
+    x = "Size Class",
+    y = "Height (ft)",
+    color = "Size Class",
+    caption = "Data Source: Ryan et al., 1976") +
+  theme_classic() +
+  theme(legend.position = "none") # Removes legend.
+
+boxplot5
+
+# fct_expand()
+# Add a new factor level/category.
+
+trees_expand <- trees_df %>%
+  mutate(SizeClassF4 = fct_expand(SizeClassF, "XXL"))
+
+levels(trees_expand$SizeClassF4) # checks levels
+
+# fct_drop()
+# Removes a factor/category.
+# Do not need to specify factor, because R will recognize those that are unused and drop them.
+
+trees_expand <- trees_expand %>%
+  mutate(SizeClassF5 = fct_drop(SizeClassF4))
+
+levels(trees_expand$SizeClassF5)
+
+```
+
+End of RMarkdown document.

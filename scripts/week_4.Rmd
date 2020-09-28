@@ -1,0 +1,142 @@
+---
+title: "RStudio Recap"
+author: "Heili Lowman"
+date: "9/1/2020"
+output: html_document
+---
+
+The following is an RMarkdown generated during Week 4 of SCCWRP Tidy Tuesday sessions.
+
+Participants were instructed to bring their own datasets and work alongside the below workflow to:
+
+1. Attach the necessary packages.
+1. Import their data (in .csv form).
+1. Tidy their datasets.
+1. Create a final plot of their data.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Demo Dataset
+
+In the following RMarkdown, I will be using the `lynx` dataset from `data()` in base R to practice importing, examining, tidying, and visualizing a dataset.
+
+Remember - to insert a new code chunk either click on **Insert** > **R** at the top of the screen or use one of the shortcuts: 
+
+- Mac - cmd + opt + I
+- PC - ctrl + alt + I
+
+## Data & Packages
+
+```{r packages, message = FALSE}
+
+# Added "message = FALSE" to header to suppress the messages you get when loading the tidyverse printing out in your knit document.
+
+# Load necessary packages.
+library(tidyverse)
+
+```
+
+
+```{r data}
+
+# Load in your dataset.
+# data_set <- read_csv("my_data.csv")
+
+# Call built-in dataset from base R.
+lynx_data <- lynx
+
+# Examine data. Then comment out, so it doesn't run in your script.
+# View(lynx_data)
+
+```
+
+
+## Data Tidying
+
+```{r tidy}
+
+# Examine structure. Also commenting out so it doesn't run.
+#str(lynx_data)
+
+# My dataset is a time series, which can be a helpful format for some analyses, but I don't want it that way for this purpose.
+
+# Make my data *not* a time series - tk_tbl() turns it into a tibble, another name for a normal dataset.
+library(timetk)
+lynx_df <- tk_tbl(lynx_data)
+#View(lynx_df)
+
+# Change column names.
+lynx_df <- lynx_df %>% # Base dataset.
+  rename(Year = index, Lynx = value) # Renames columns.
+
+# Q & A:
+# Changing column structure:
+# as.numeric(dataset_name$column_name) - coerces column to be numeric, forces all non-numeric values to be "NA", may not work if you have an unrecognized character symbol
+# as.character() - coerces all text (numbers and letters) to be recognized as characters
+# as.factor() - also a text string, but can be categorical/ordinal
+#   relevel() - relevel factors in a particular order
+
+# To create a new column in a different format, let's pipe it using the tidyverse!
+# dataset <- dataset %>%
+#  mutate(new_column_name = as.numeric(old_columnn_name)) 
+
+# It's always a good idea to keep your raw/previous data intact, and add a newly formatted column under a new name.
+
+# Dealing with NAs:
+# naniar - good package for dealing with NAs, opposite of replace_NA
+# replace_NA() - replacing NAs with specified values, opposite of naniar
+
+
+```
+
+
+## Data Visualization
+
+```{r plot, message = FALSE, echo = FALSE}
+
+# I've added "echo=FALSE" to my header, because I only want my figure, not my code, to knit in the final document.
+
+# Create a basic scatterplot of my lynx trapping data.
+lynx_fig <- ggplot(lynx_df, aes(x = Year, y = Lynx)) + # basic dataset
+  geom_point(size = 3, alpha = 0.75) + # creates scatterplot
+  geom_smooth(method = lm, color = "aquamarine2") + # adds linear model
+  labs(x = "Year",
+    y = "Number of Lynx Trapped",
+    title = "Lynx R Dataset",
+    subtitle = "Tidy Tuesday demo, September 1",
+    caption = "Data Source: Brockwell and Davis 1991") + # includes labels
+  theme_classic() + # theme with only axes present
+  theme(legend.position = "none") + # suppresses legend
+  scale_x_continuous(breaks = seq(1820, 1940, 10)) # edits x axes tick marks
+  
+lynx_fig # Calls figure.  
+
+# Q & A:
+# If you'd like to add more customization, you can put in "color=" or "shape=" in the aesthetics of ggplot.
+# If you're customizing multiple geometries, you should add those customizations to the parentheses of that geometry - e.g., geom_point(aes(color="aquamarine3")).
+# NOTE - R accepts the British spelling of a few things, including "colour" in lieu of "color".
+  
+# If you'd like to comment out a bunch of code, you can use the commenting out shortcut:
+# Mac: Command + Shift + C
+# PC: Ctrl + Shift + C
+
+# If you'd like to filter your dataset prior to plotting, you can again use the tidyverse to do so:
+# leah_fig <- orig_data %>% # original dataset
+#   filter(column_name == "A") %>% # filter for only values of "A" in a column
+#   ggplot(aes()) + # plot as normal
+#   geom_point()
+
+# If you'd like to create boxplot with raw data values shown on top, you can layer your geometries like so:
+# ggplot(data, aes(x = x, y = y)) +
+#   geom_boxplot() + # creates boxplot
+#   geom_jitter(width = 0.1) + # creates jittered points according to each category along the x axis
+#   geom_hline(y = 5) + # create a horizontal line across the whole plot at y = 5
+#   geom_vline(x = 2) # create a vertical line across the whole plot at x = 2
+
+# Geometries appear in the order in which they're typed in your ggplot text, so layer logically!
+
+```
+
+*End of RMarkdown script.*
