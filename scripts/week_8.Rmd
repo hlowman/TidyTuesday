@@ -1,0 +1,201 @@
+---
+title: "Tidy Tuesday: Geoms"
+author: "Caroline Owens"
+date: "9/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages and data, message=FALSE}
+# #Install packages (if you haven't yet)
+# install.packages("tidyverse")
+# install.packages("psych")
+# 
+# install.packages("devtools")
+# library(devtools)
+# devtools::install_github("an-bui/calecopal")
+
+#Load your packages
+library(tidyverse)
+library(psych)
+library(calecopal)
+
+#Read in your data
+penguins <- read_csv("penguins.csv") #You can always check the filepath by using the import button in the Files pane of Rstudio
+
+#visualize your data
+#View(penguins) #opens in a new window - Always comment out View() before knitting your document
+head(penguins) #see first six rows
+str(penguins) #see the structure of the dataset (number, names, and type of columns)
+
+unique(penguins$species) #for any one column, check how many different values there are + what the values are
+
+#From psych package for visualization
+pairs.panels(penguins) #This brings up a LOT of information. The upper diagonal panel is pairwise correlation coefficient values; the bottom diagonal panel is scatterplots (with loess best fit lines in red, you can ignore these or specify linear fits with method = lm), and the blue plots along the diagonal are histograms with density plots. 
+```
+
+Color palettes
+```{r Color palettes}
+
+#Intro to Calecopalette
+names(cal_palettes) #see all the different palettes available
+cal_palette("lake") #visualize the colors in a given palette
+cal_palette("lake", n = 50, "continuous") #you can adjust the number of colors and type (cont or discrete)
+cal_palette("lake")[4] #pull out hex code for a single color if you want to use them individually
+
+#Other options:
+  #scale_color_
+  #scale_fill_
+  #scale_
+#These functions will pull up lists of other default R color palettes and options
+```
+
+Scatter Plots
+
+```{r Scatterplots and lines}
+#Basic scatter plot with geom_point
+ggplot(data = penguins)+
+  geom_point(aes(x = flipper_length_mm, y = body_mass_g))
+
+#Set color by species
+ggplot(data = na.omit(penguins))+
+  geom_point(aes(x = flipper_length_mm, y = body_mass_g, color = species))+
+  scale_color_manual(values = cal_palette("lake"))
+
+#Set color by bill length (continuous variable)
+ggplot(data = na.omit(penguins))+
+  geom_point(aes(x = flipper_length_mm, y = body_mass_g, color = bill_length_mm))+
+  scale_color_gradientn(colors = cal_palette("lake"))
+
+#Get FANCY with geom_smooth
+ggplot(data = na.omit(penguins), aes(x = flipper_length_mm, y = body_mass_g, color = species))+
+  geom_point()+
+  scale_color_manual(values = cal_palette("lake"))+
+  geom_smooth(method = "lm", level = .9) #set method to use linear regression fits (default loess); set level to specify confidence interval (default 95%); use se = F to not plot a confidence interval
+
+
+#Even fancier: other geom_lines
+ggplot(data = na.omit(penguins), aes(x = flipper_length_mm, y = body_mass_g, color = species))+
+  geom_point()+
+  geom_hline(yintercept = mean(penguins$body_mass_g, na.rm = T))+
+  geom_hline(yintercept = 4000)#add horizontal line 
+#geom_vline vertical line
+#geom_abline: any line based on slope / intercept
+
+#To add separate hlines for the mean of each group:
+df <- penguins %>% 
+  na.omit() %>% 
+  group_by(species) %>% 
+  summarize(mean = mean(body_mass_g))
+
+df
+
+plot <- ggplot(data = na.omit(penguins), aes(x = flipper_length_mm, y = body_mass_g, color = species))+
+  geom_point()
+
+for (i in 1:3){
+  int <- as.numeric(df[i,2])
+  plot <- plot +geom_hline(yintercept = int, lty = 2)
+}
+
+plot
+```
+
+Histograms: for continuous variables only
+```{r Histograms}
+#Basic histogram
+#Adjust # of columns using either bins, binwidth, or breaks
+ggplot(data = penguins)+
+  geom_histogram(aes(body_mass_g), bins = 10)
+
+ggplot(data = penguins)+
+  geom_histogram(aes(body_mass_g), binwidth = 100)
+
+ggplot(data = penguins)+
+  geom_histogram(aes(body_mass_g), breaks = c(2500, 3000, 3500, 4000))
+
+#Using facet_wrap or facet_grid
+
+ggplot(data = penguins, aes(fill = species))+
+  geom_histogram(aes(body_mass_g), bins = 10)+
+  facet_wrap(vars(species))
+
+ggplot(data = penguins, aes(fill = species))+
+  geom_histogram(aes(body_mass_g), bins = 10)+
+  facet_grid(cols = vars(species), rows = vars(sex))
+
+#Density plot
+ggplot(data = penguins)+
+  geom_density(aes(x = body_mass_g))
+
+
+```
+Box Plots
+```{r Boxplots and labels}
+#Basic boxplot with geom_boxplot
+ggplot(data = penguins, aes(y = body_mass_g, x = species, fill = species))+
+  geom_boxplot()+
+  scale_fill_manual(values = cal_palette("fire"))
+
+#Fancy: geom_label (2 ways)
+ggplot(data = penguins, aes(y = body_mass_g, x = species, fill = species))+
+  geom_boxplot()+
+  scale_fill_manual(values = cal_palette("fire"))+
+  geom_label(aes(label = species))
+
+df <- penguins %>% 
+  group_by(species) %>% 
+  summarise(n = n(), med = median(body_mass_g, na.rm = T))
+
+df
+
+ggplot(data = penguins, aes(y = body_mass_g, x = species, fill = species))+
+  geom_boxplot()+
+  scale_fill_manual(values = cal_palette("fire"))+
+  geom_label(data = df, aes(x = species, y = 6000, label = n)) #labels at a given y position
+
+ggplot(data = penguins, aes(y = body_mass_g, x = species, fill = species))+
+  geom_boxplot()+
+  scale_fill_manual(values = cal_palette("fire"))+
+  geom_text(data = df, aes(x = species, y = med+120, label = n))
+
+#SUPER FANCY: violin plots combine density plots and boxplots
+ggplot(data = penguins)+
+  geom_violin(aes(y= body_mass_g, x = species))
+
+```
+
+
+
+Bar / column plots
+```{r Barplots and error bars}
+#Basic bar plots: using geom_col or geom_jitter for categorical data
+ggplot(data = penguins, aes(y = body_mass_g, x = species))+
+  geom_col(aes(fill = species))
+
+ggplot(data = penguins, aes(y = body_mass_g, x = species))+
+  geom_jitter(aes(color = species), width = 0.1)
+
+
+#Getting FANCY with geom_error
+
+penguins %>% 
+  group_by(species) %>% 
+  summarize(mass = mean(body_mass_g, na.rm = T),
+            sd = sd(body_mass_g, na.rm = T)) %>% 
+  ggplot(aes(y = mass, x = species, fill = species))+
+  geom_col()+
+  geom_errorbar(aes(ymin = mass - sd, ymax = mass + sd), width = 0.1)
+
+
+#Generally you won't want to use geom_bar
+ggplot(data = penguins)+
+  geom_bar(aes(x = body_mass_g)) #just like histograms
+
+```
+
+More geoms and examples...
+http://r-graph-gallery.com/
