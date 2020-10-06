@@ -17,9 +17,9 @@ Week 5: [What is tidy data?](https://vimeo.com/456928749)
 
 Week 6: ["for" loops tutorial](https://vimeo.com/458786351)
 
-Week 7: "forcats" tutorial
+Week 7: ["forcats" tutorial](https://vimeo.com/465011265)
 
-Week 8: Fun with ggplot: Part I
+Week 8: [Fun with ggplot: Part I](https://vimeo.com/465017065)
 
 Week 9: Fun with ggplot: Part II
 
