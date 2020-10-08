@@ -1,0 +1,385 @@
+---
+title: "Tidy Tuesday"
+subtitle: "Pretty Interactive Data Viz with ggplot and plotly"
+author: "Kate Culhane & Caroline Owens"
+date: "06 Oct 2020"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    theme: cerulean
+    highlight: haddock
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.height = 3, fig.width = 5)
+```
+
+```{r, include = FALSE}
+# The options above the first chunk are for customizing how your knitted markdown will look. You can google other themes and highlights to change it. toc creates a table of contents; the depth is the number of #'s that will be included as header levels, and `float` lets the TOC follow you as you scroll down.
+```
+<br>
+
+*Heads up about the way I code:*
+
+- I like displaying plots in the R Studio console instead of inline (you can switch this setting for each document using the gear)
+- I'll try to use double quotations (") instead of single ('), but in case I forget...they're the same!
+- Keyboard shortcuts: https://support.rstudio.com/hc/en-us/articles/200711853-Keyboard-Shortcuts
+  - **Run code**
+    - ctrl/cmd + enter
+  - **%>%**
+    - ctrl/cmd + shift + m
+  - **Insert code chunk**
+    - ctrl/cmd + alt + i
+  - **Comment out lines**
+    - ctrl/cmd + shift + c
+    
+```{r}
+
+# Load packages
+library(tidyverse) # readr (read_csv and other data loading functions), dplyr (select, filter, mutate, and other data wrangling functions), magrittr (the piping function), ggplot2 (everything dataviz)
+library(plotly) # making interactive graphs (ggplotly())
+library(htmlwidgets) # Exporting graphs as HTML (saveWidget())
+
+# Load data
+penguins <- read_csv("penguins.csv")
+
+# You can also do the following to load the data via CRAN:
+# install.packages("palmerpenguins")
+# library(palmerpenguins)
+# penguins <- penguins
+
+```
+
+<br>
+
+## 1: IncrediBILL Palmer Penguins
+
+**Same data set as last week: Palmer Penguin dataset from LTER data.**
+
+### Data exploration
+
+```{r}
+
+# I like to run all these in the console or comment them out after running 
+
+#View(penguins) # Can also click on the object in the global environment
+str(penguins) #shows the structure of the dataset
+tail(penguins, 5) #shows the last 5 rows of the dataset
+
+```
+
+<br>
+
+### Static scatterplot
+
+**REVIEW:** Create a scatterplot using `ggplot`.
+
+- x-axis: `body_mass_g`
+- y-axis: `bill_length_mm`
+- point color: `species`
+
+*Hint:* Use `ggplot`, `geom_point`, and `aes(color = "")`
+
+Tips:
+
+- `ggplot2` is the package, `ggplot` is the function
+- Things ggplot HAS to know: 1) dataset, 2) aesthetics, 3) geom
+- Dataset and aes can be specified either in `ggplot()` or any `geom_*`
+- Aes is for visual changes that depend on a value in the data (as opposed to visual changes that apply to all values)
+
+```{r}
+
+ggplot(data = penguins,
+       aes(x =  body_mass_g, y = bill_length_mm,
+           color = species, shape = sex)) +
+  geom_point(na.rm = TRUE) # suppresses warning code about removed NAs
+
+```
+
+<br>
+
+#### Beautification
+
+Tips:
+
+- R Studio cheatsheets: https://rstudio.com/resources/cheatsheets/
+- Order doesn't matter... as long as you name your vectors
+  - When adjusting scales, R will apply your color/shape values in the same order as levels in your data
+  - If you name the elements of your scale vector after your data values, R will match values instead of using order - this is more foolproof!
+- Choosing color schemes
+  - Colors in R: http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+  - Hex codes: https://coolors.co/ (you can also upload a photo to match colors from)
+  - Think about data type: continuous, discrete, ordinal (ordered), diverging
+- Choosing shapes
+  - In R: http://www.sthda.com/english/wiki/ggplot2-point-shapes
+  - Unicode: https://jrgraphix.net/r/Unicode/2600-26FF
+- Adjusting themes
+  - Changing elements of a theme: https://ggplot2.tidyverse.org/reference/theme.html
+
+```{r}
+
+# Make the plot pretty!
+
+# Save a vector of colors for use in future graphs
+col_scale <- c("#A3E7FC", "#32908F", "#26C485") # c() combines values into a vector
+names(col_scale) <- c("Adelie", "Gentoo", "Chinstrap") # naming each value to correspond to the species
+
+# Save a vector of names for use in the legend
+lab_scale <- c("P. adeliae", "P. papua", "P. antarcticus") #scientific names :)
+names(lab_scale) <- c("Adelie", "Gentoo", "Chinstrap") #ALWAYS name your vectors and double check the order
+
+# New pretty graph
+p <- penguins %>% 
+  na.omit() %>% # removes ALL lines with NAs from dataset
+  ggplot(aes(x = body_mass_g/1000, # can divide by 1000 to make units more manageable
+             y = bill_length_mm,
+             color = species, # point color depends on species
+             shape = sex)) + # point shape depends on sex
+  geom_point(size = 1.5, # adjust point size
+             stroke = 1.1) + # adjust outline line width
+  # scale_color_manual(values = "red", "yellow", "green")) + # DOESN'T WORK
+  # scale_color_manual(values = c("lightskyblue", "slateblue4", "darkslategray4")) + 
+  scale_color_manual(values = col_scale,
+                     labels = lab_scale, # order matters (unless you use a named vector!)
+                     name = "Species") +
+  # scale_shape_manual(values = c("\u2600", "\u2601")) + # using unicode values
+  # scale_shape_manual(values = c("\u2640", "\u2642")) + #another unicode option
+  scale_shape_manual(values = c(19, 21), #base R shapes
+                     name = "Sex") + #legend title
+  theme_minimal() + # one of the default themes
+  theme(text = element_text(color = "grey80"), # ALL text color
+        title = element_text(face = "bold"), # all TITLES to bold
+        plot.title = element_text(color = "lightblue", # PLOT TITLE color
+                                  size = 16, # PLOT TITLE text size
+                                  hjust = 0.5, vjust = 5), # adjusting title positioning
+        plot.margin = margin(25,15,10,10), # remember TRBL (trouble)
+        axis.text = element_text(color = "grey70"), # AXIS LABELS color
+        legend.text = element_text(face = "italic"), # LEGEND LABELS color
+        legend.background = element_rect(fill = "grey25", # LEGEND BACKGROUND color
+                                         color = NA), # no legend outline
+        plot.background = element_rect(fill = "grey20"), # entire background color
+        panel.grid = element_line(color = "grey60")) + # GRID LINE color
+  labs(x = "Body mass (kg)", # Make sure units match!!! Especially after converting
+       y = "Bill length (mm)",
+       title = "IncrediBILL Palmer Penguins")
+
+p #view the named plot
+
+```
+
+<br>
+
+#### Saving a theme
+
+Like your theme and want to use it for another graph without copy-pasting? Save it!
+
+- `theme_set` replaces the default
+- `theme_update` adds new elements to the default theme (analagous to `+`)
+- `theme_replace` *replaces* elements of the default theme
+
+```{r}
+
+# What's the default theme in your R session?
+ggplot(cars, aes(x = speed, y = dist)) + geom_point()
+
+# Set the default as one of the included themes
+theme_set(theme_classic())
+#Check it out
+ggplot(cars, aes(x = speed, y = dist)) + geom_point()
+
+# Make your own theme!
+theme_awful <- theme_dark() # save a copy of a default theme with a new name
+theme_set(theme_awful) # set your copy as the default
+theme_update(panel.grid.minor = element_line(colour = "red", size = 3), #update your copy!
+             plot.background = element_rect(fill = "yellow"),
+             title = element_text(size = 60, face = "italic", color = "tan"),
+             axis.text = element_text(color = "purple", face = "bold", angle = 160))
+
+#Check your new default theme out
+ggplot(cars, aes(x = speed, y = dist)) + geom_point()
+
+```
+
+<br>
+
+#### Saving the plot
+
+- Better to use code than the "export" button
+  - Can control output size and keep values consistent
+  - Whatever you do...don't screenshot! Gives you terrible resolution.
+
+```{r}
+
+# Check filepath
+getwd() # usually run in the console - check where on your computer the plot will be saved
+
+ggsave("penguin_plot.png", # filepath will be added to WD path (prob just filename) - INCLUDE FILE TYPE EXTENSION.
+       plot = p, # name of object to save - default is last_plot()
+       height = 4, width = 5, units = "in") # output size (can use inches, cm, pixels)
+
+```
+
+<br>
+
+### Interactive scatterplot
+
+Plotly
+
+- Plotly is a platform that interacts with R, Python, and Julia
+- Plotly focuses on creating interactive data visualizations and web applications (check out "Dash")
+- We'll be using ggplotly, which easily turns ggplots into interactive graphs: https://plotly.com/ggplot2/
+
+```{r}
+
+ggplotly(p) # notice that the plotly graph displays in the "Viewer" pane!
+
+```
+
+<br>
+
+## 2: Flippin' Palmer Penguins
+
+### Static scatterplot
+
+**REVIEW:** Create a scatterplot using `ggplot`.
+
+- x-axis: `flipper_length_mm`
+- y-axis: `body_mass_g`
+- point color: `species`, same color scheme as above (use the saved vector!)
+
+```{r}
+
+theme_set(theme_classic()) # switching defaults since I'm not a huge fan of theme_awful...
+
+ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g,
+                     color = species)) +
+  geom_point(na.rm=TRUE) + # suppress warning about NAs being removed
+  scale_color_manual(values = col_scale) # same color vector as previous graph!
+
+```
+
+<br>
+
+#### Quick beautification
+
+Tips:
+
+- Always make a static graph first - but don't spend time optimizing all the theme elements!
+  - some formatting elements do not translate
+  - legends, element sizes, and themes get funky with ggplotly
+
+The following aesthetic parameters will stay nice when you run your graph through Plotly:
+```{r}
+
+ggplot(penguins, aes(x = flipper_length_mm/10, y = body_mass_g/1000, # adjust units
+                           fill = species)) + # changes INSIDE color of the point
+  geom_point(na.rm = TRUE,
+             shape = 21, # this particular shape allows for a color AND a fill
+             color = "grey30") + # changes OUTSIDE color of the point
+  scale_fill_manual(values = col_scale, # use scale_fill_* because we used "fill" in the aes
+                    name = "Species") +
+  labs(x = "Flipper length (cm)", # match units!
+       y = "Body mass (kg)", # match units!
+       title = "Flippin' Palmer Penguins")
+
+```
+
+<br>
+
+### Interactive scatterplot
+
+```{r}
+
+# Updated static plot
+p2 <- ggplot(penguins, aes(x = flipper_length_mm/10, y = body_mass_g/1000,
+                           fill = species,
+                           cooltip = sex)) + # text to use for tooltip - can have any name
+  geom_point(na.rm = TRUE,
+             size = 2, shape = 21, color = "grey30") +
+  scale_fill_manual(values = col_scale,
+                    name = "Species") +
+  theme_classic() +
+  labs(x = "Flipper length (cm)",
+       y = "Body mass (kg)",
+       title = "Flippin' Palmer Penguins")
+
+# Interactive plot
+ggplotly(p2,
+         tooltip = "cooltip") # changes tooltip text. Remember - you can add any data column to the tooltip as long as you name it in aes()
+
+```
+
+<br>
+
+### Animated scatterplot
+
+This is ideal for timeseries data - especially measurements that are paired between years.
+```{r}
+
+# Updated static plot
+p3 <- ggplot(penguins, aes(x = flipper_length_mm/10, y = body_mass_g/1000,
+                           fill = species,
+                           cooltip = sex,
+                           frame = year)) + # adds animation, with one frame per year
+  geom_point(na.rm = TRUE,
+             size = 2, shape = 21, color = "grey30") +
+  scale_fill_manual(values = col_scale,
+                    name = "Species") +
+  theme_classic() +
+  labs(x = "Flipper length (cm)",
+       y = "Body mass (kg)",
+       title = "Flippin' Palmer Penguins")
+
+# Interactive plot
+p3_move <- ggplotly(p3,
+                    tooltip = "cooltip")
+
+p3_move
+
+```
+
+<br>
+
+#### Saving the plot
+
+*Save as HTML*
+
+- Can save in the HTML output of R markdown
+- Can save as a standalone HTML file using `htmltools`
+
+```{r}
+
+# Save as standalone HTML
+saveWidget(p3_move, "penguin_animation.html") #this function is from the htmlwidget package
+
+```
+
+*Export to plotly account*
+
+- Create a free plotly account: chart-studio.plotly.com
+  - Find your username and API key
+- Embed the plot in a webpage: https://help.plotly.com/embed-graphs-in-websites/
+
+```{r, message = FALSE, output = FALSE}
+
+# Save plotly username and API key
+Sys.setenv("plotly_username" = "katekathrynkat")
+Sys.setenv("plotly_api_key" = "WmLiHIWtsIoNpfMz96a6")
+
+# Explort plot to plotly
+api_create(x = p3_move, # name of plot
+           fileopt = "overwrite", sharing = "public")
+
+```
+
+See Kate's embeddable graph: https://chart-studio.plotly.com/~katekathrynkat/39/#/
+
+-Scroll to bottom right
+-There are 4 icons: Facebook, Twitter, link, <>
+-The <> icon will bring up the code you can give to a webmaster or embed on an html page
+
