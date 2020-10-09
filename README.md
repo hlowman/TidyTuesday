@@ -23,4 +23,4 @@ Week 8: [Fun with ggplot: Part I](https://vimeo.com/465017065)
 
 Week 9: Fun with ggplot: Part II
 
-Week 10: TBD
+Week 10: Installing Git & Connecting to RStudio
