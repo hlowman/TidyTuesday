@@ -23,7 +23,7 @@ Week 8: [Fun with ggplot: Part I](https://vimeo.com/465017065)
 
 Week 9: [Fun with ggplot: Part II](https://vimeo.com/467740185)
 
-Week 10: Installing Git & Connecting to RStudio
-*No recording, but materials covered can be found at Jenny Bryan's site https://happygitwithr.com/*
+Week 10: Installing Git & Connecting to RStudio - no recording
+*Materials covered can be found at Jenny Bryan's site https://happygitwithr.com/*
 
 Week 11: "vegan" tutorial
