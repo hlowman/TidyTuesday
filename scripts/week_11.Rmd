@@ -1,0 +1,276 @@
+---
+title: 'vegan workshop - SCCWRP Tidy Tuesday'
+author: "[your name here]"
+date: "27 May 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+More details regarding ordination and visualization can be found [here](https://rpubs.com/an-bui/vegan-cheat-sheet).
+
+```{r libraries-data, message = FALSE}
+# libraries
+library(tidyverse)
+library(vegan)
+
+# optional
+library(ggvegan)
+```
+
+```{r data-google-drive}
+# data
+# bird communities
+birds <- read_csv("bird-comm.csv") %>% 
+  column_to_rownames("site")
+
+# environmental variables
+env <- read_csv("env-var.csv")
+```
+
+```{r metadata-setup}
+# set up a "metadata" frame - will be useful for plotting later!
+site_type <- env %>% 
+  # selects the named columns
+  select(site, landtype)
+```
+
+
+### How speciose are my communities?
+
+```{r species-richness}
+
+sppr <- specnumber(birds)
+
+
+sppr_aov <- aov(sppr ~ landtype, data = site_type)
+summary(sppr_aov)
+```
+
+```{r species-richness-plot}
+
+sppr_df <- sppr %>% 
+  
+  enframe() %>% 
+  
+  full_join(site_type, by = c("name" = "site"))
+
+sppr_plot <- ggplot(sppr_df, aes(x = landtype, y = value, color = landtype)) +
+  geom_boxplot()
+sppr_plot
+```
+
+### How diverse are my communities?
+
+```{r shannon-diversity}
+# 
+shannondiv <- diversity(birds)
+
+# try simpson's diversity
+
+```
+
+```{r shannon-diversity-plot}
+shandiv_df <- shannondiv %>% 
+  
+  enframe() %>% 
+  
+  full_join(., site_type, by = c("name" = "site")) %>% 
+  
+  group_by(landtype) %>% 
+  summarize(mean = mean(value))
+
+shandiv_plot <- ggplot(shandiv_df, aes(x = landtype, y = mean, fill = landtype)) +
+  geom_col()
+shandiv_plot
+```
+
+### How different are my communities in species composition?
+
+#### perMANOVA
+```{r bird-permanova}
+
+bird_perm <- adonis(birds ~ landtype, data = env)
+bird_perm
+```
+
+#### PCA
+
+```{r bird-PCA}
+
+birdPCA <- rda(birds)
+birdPCA
+
+summary(birdPCA)
+
+
+PCAscores <- scores(birdPCA, display = "sites") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("site") %>% 
+  full_join(site_type, by = "site")
+
+
+PCAvect <- scores(birdPCA, display = "species") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("species")
+
+PCA_plot <- ggplot() +
+  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = landtype)) +
+  geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = species))
+
+PCA_plot
+```
+
+```{r using-ggvegan}
+# autoplot()
+PCA_biplot <- autoplot(birdPCA)
+PCA_biplot
+
+# fortify()
+PCA_fortify <- fortify(birdPCA)
+
+
+PCA_fort_sites <- PCA_fortify %>% 
+  filter(Score == "sites") %>% 
+  full_join(., site_type, by = c("Label" = "site"))
+
+
+PCA_fort_species <- PCA_fortify %>% 
+  filter(Score == "species")
+
+PCA_fortify_plot <- ggplot() +
+  geom_point(data = PCA_fort_sites, aes(x = PC1, y = PC2, col = landtype)) +
+  scale_color_manual(values = c("coral", "lightgreen", "darkblue")) +
+  geom_segment(data = PCA_fort_species, aes(x = 0, xend = PC1, y = 0, yend = PC2), 
+               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_text(data = PCA_fort_species, aes(x = PC1, y = PC2, label = Label))
+PCA_fortify_plot
+```
+
+#### NMDS
+
+Non-metric Multidimensional Scaling
+
+```{r bird-NMDS}
+
+bird_NMDS <- metaMDS(birds)
+
+
+bird_NMDS
+
+# points: sample scores
+# dims: number of NMS axes
+# stress: stress of final solutions
+# data: what was ordinated and any transformations
+# distance: distance metric used
+# converged: whether or not solution converged
+# tries: number of configurations tried
+# species: scores of variables
+# call: how function was called
+
+stressplot(bird_NMDS)
+
+plot(bird_NMDS)
+
+```
+
+```{r NMDS-plot}
+
+nmds_df <- scores(bird_NMDS, display = "sites") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("site") %>% 
+  full_join(site_type, by = "site")
+
+
+nmds_plot <- ggplot(nmds_df, aes(x = NMDS1, y = NMDS2, color = landtype, shape = landtype)) +
+  geom_point(size = 3, alpha = 0.8) +
+  stat_ellipse()
+nmds_plot
+```
+
+```{r}
+
+fit <- envfit(bird_NMDS, birds, perm = 999) 
+
+
+fit_pvals <- fit$vectors$pvals %>% 
+  as.data.frame() %>% 
+  rownames_to_column("species") %>% 
+  dplyr::rename("pvals" = ".")
+
+
+fit_spp <- fit %>% 
+  scores(., display = "vectors") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("species") %>% 
+  full_join(., fit_pvals, by = "species") %>% 
+  filter(pvals == 0.001)
+
+
+nmds_plot_new <- ggplot(nmds_df, aes(x = NMDS1, y = NMDS2)) +
+  coord_fixed() +
+  geom_point(aes(color = landtype, shape = landtype), 
+             size = 3, alpha = 0.8) +
+  stat_ellipse(aes(color = landtype)) +
+  geom_segment(data = fit_spp, aes(x = 0, xend = NMDS1, y = 0, yend = NMDS2),
+               arrow = arrow(length = unit(0.25, "cm")),
+               col = "black") +
+  geom_text(data = fit_spp, aes(label = species))
+nmds_plot_new
+```
+
+
+##### Things to consider about stress
+
+```{r subsampled-NMDS}
+sub <- birds[sample(nrow(birds), 20), ]
+subNMDS <- metaMDS(sub)
+stressplot(subNMDS)
+```
+
+### How is community structure related to specific environmental variables?
+
+```{r bird-CCA}
+
+birdCCA <- cca(birds ~ canopy_height + stems_ha + big_stem_bas, data = env)
+birdCCA
+
+```
+
+```{r bird-CCA-plot}
+# using ggvegan
+ccaplot_ggvegan <- autoplot(birdCCA)
+ccaplot_ggvegan
+
+# using ggplot
+# get extension factor
+ccaplot <- plot(birdCCA)
+
+ccavectors <- as.matrix(scores(birdCCA, display = "bp", scaling = "species")*12.2) %>% 
+  as.data.frame()
+
+# extract site coordinates
+site_data <- scores(birdCCA, display = "sites") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("site") %>% 
+  full_join(site_type, by = "site")
+
+# extract species coordinates
+species_data <- scores(birdCCA, display = "species") %>% 
+  as.data.frame()
+
+# plot
+cca_plot <- ggplot(site_data) +
+  geom_point(aes(x = CCA1, y = CCA2, color = landtype), shape = 19) +
+  coord_fixed() +
+  geom_segment(data = ccavectors, aes(x = 0, y = 0, xend = CCA1, yend = CCA2), arrow = arrow(length = unit(0.2, "cm"))) +
+  scale_x_continuous(limits = c(-12, 10)) +
+  scale_y_continuous(limits = c(-3, 12)) +
+  geom_point(data = species_data, aes(x = CCA1, y = CCA2), shape = 17, size = 2, color = "blue") +
+  geom_text(data = ccavectors, aes(x = CCA1, y = CCA2, label = rownames(ccavectors)))
+
+cca_plot
+```
