@@ -26,3 +26,5 @@ Week 9: [Fun with "ggplot": Part II](https://vimeo.com/467740185)
 Week 10: Installing Git & Connecting to RStudio - no recording
 
 Week 11: ["vegan" tutorial](https://vimeo.com/471034228)
+
+Week 12: "shiny" tutorial - note, script is called "app.R"
