@@ -19,10 +19,10 @@ Week 6: ["for" loops tutorial](https://vimeo.com/458786351)
 
 Week 7: ["forcats" tutorial](https://vimeo.com/465011265)
 
-Week 8: [Fun with ggplot: Part I](https://vimeo.com/465017065)
+Week 8: [Fun with "ggplot": Part I](https://vimeo.com/465017065)
 
-Week 9: [Fun with ggplot: Part II](https://vimeo.com/467740185)
+Week 9: [Fun with "ggplot": Part II](https://vimeo.com/467740185)
 
 Week 10: Installing Git & Connecting to RStudio - no recording
 
-Week 11: "vegan" tutorial
+Week 11: ["vegan" tutorial](https://vimeo.com/471034228)
