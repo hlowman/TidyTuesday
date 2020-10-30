@@ -27,4 +27,4 @@ Week 10: Installing Git & Connecting to RStudio - no recording
 
 Week 11: ["vegan" tutorial](https://vimeo.com/471034228)
 
-Week 12: "shiny" tutorial - note, script is called "app.R"
+Week 12: ["shiny" tutorial](https://vimeo.com/473515014) - this week's script is "app.R"
