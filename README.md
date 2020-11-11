@@ -28,3 +28,7 @@ Week 10: Installing Git & Connecting to RStudio - no recording
 Week 11: ["vegan" tutorial](https://vimeo.com/471034228)
 
 Week 12: ["shiny" tutorial](https://vimeo.com/473515014) - this week's script is "app.R"
+
+Week 13: GitHub tutorial
+
+Week 14: Generalized linear models
