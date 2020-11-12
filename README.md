@@ -1,7 +1,13 @@
 # Tidy Tuesday
-Scripts and session recordings from the Southern California Coastal Water Research Project's Tidy Tuesday R tutorial series.
+This repository houses all materials from the Southern California Coastal Water Research Project's Tidy Tuesday R tutorial series.
 
-All data and scripts covered in the following sessions are included in the folders labeled "Data" and "Scripts". Session recordings can be accessed by clicking on the weeks' hyperlinks below or by visiting [SCCWRP's Vimeo page](https://vimeo.com/sccwrp).
+- The *scripts* folder contains all code live-coded during the following sessions, with additional annotations added for clarity.
+
+- The *data* folder contains all external datasets required to run the code covered during the following sessions.
+
+- The *resources* folder contains additional materials to support lessons and guides compiled by instructors.
+
+Session recordings may be accessed by clicking on the weeks' hyperlinks below or by visiting [SCCWRP's Vimeo page](https://vimeo.com/sccwrp).
 
 *Syllabus*
 
