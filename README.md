@@ -1,5 +1,5 @@
 # Tidy Tuesday
-This repository houses all materials from the Southern California Coastal Water Research Project's Tidy Tuesday R tutorial series.
+This repository houses all materials from the [Southern California Coastal Water Research Project's](https://www.sccwrp.org/) Tidy Tuesday R tutorial series.
 
 - The *scripts* folder contains all code live-coded during the following sessions, with additional annotations added for clarity.
 
@@ -8,6 +8,8 @@ This repository houses all materials from the Southern California Coastal Water 
 - The *resources* folder contains additional materials to support lessons and guides compiled by instructors.
 
 Session recordings may be accessed by clicking on the weeks' hyperlinks below or by visiting [SCCWRP's Vimeo page](https://vimeo.com/sccwrp).
+
+If you would like to be added to the mailing list for this group, please contact me at heilil *at* sccwrp.org with your request.
 
 *Syllabus*
 
