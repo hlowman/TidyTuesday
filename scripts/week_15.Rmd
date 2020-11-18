@@ -1,0 +1,298 @@
+---
+title: "ggplot2 Graphics Tutorial"
+author: "Terra Dressler"
+date: "November 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+In this tutorial, we will explore functions within ggplot2 that allow us to customize essentially every aspect of how our plots look.
+
+We will use dataset of penguin measurements from Palmer Archipelago, Antarctica. These data are originally from this publication:
+https://doi.org/10.1371/journal.pone.0090081 and the palmerpenguins package was created by Allison Horst at UCSB. For more information about this dataset and package, check out https://allisonhorst.github.io/palmerpenguins/
+
+We will make:
+
+  1. a scatter plot
+  
+  2. a boxplot
+  
+  3. a point range plot
+  
+We will manipulate aesthetics by:
+
+  1. Using basic ggplot commands to change point size, shape, transparency, outline 
+    
+  2. Exploring several different options for changing plot colors
+    
+  3. Changing axis scales, labels, font sizes, and legend appearance
+    
+  4. Adding outputs of some basic statistical tests to our plot
+    
+  5. Customizing our plot theme
+
+###1. Load Packages
+```{r}
+ 
+library(tidyverse) 
+library(palmerpenguins) #contains the penguin data!
+library(RColorBrewer) #contains color palettes we can can call on
+library(ggsci) #another color package, one of my favorites!
+library(scales) #will use to view color scales and hex codes for ggsci palettes
+library(ggpubr) #will use to add some statistical outputs to our plots
+
+```
+
+Note: some other great color packages include viridis, dichromat, ggthemes, ghibli, wesanderson, pals, and rcartocolor
+
+###2. Read in our "penguins" dataset
+
+```{r}
+
+penguins <- palmerpenguins::penguins %>% 
+  rename(flipper = flipper_length_mm, bill_length = bill_length_mm, bill_depth = bill_depth_mm) %>% 
+  mutate(mass_kg = body_mass_g/1000, bill_ratio = bill_length/bill_depth) %>% 
+  na.omit() 
+  
+```
+
+
+
+###3. Create a scatter plot 
+####Say we are interested in how flipper length scales as a function of body mass for each penguin species. We will first make a basic scatter plot to visualize this relationship
+```{r}
+
+ggplot(penguins, aes(x = mass_kg, y = flipper))+
+  geom_point()
+
+```
+
+####Default plot output is not great. We want to visualize each species separately with trendlines and make our plot easier to interpret and prettier to look at!
+
+    
+```{r}
+#1. Basic commands, theme changes
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species, shape = species))+ 
+  geom_point(alpha = 0.8, size = 2)+ #can change shape and stroke (shape outline size) here
+  theme_classic() #show a couple other themes
+
+#2. Axis labels
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = expression("Flipper Length (mm)", x = "Body Mass (kg)")) #mention title and caption too
+
+#3. Degrees, subscripts, and superscripts within labels 
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = expression("Oxygen Uptake Rate  " (mg*O[2] * min^-1)), x = expression("Temperature " ( degree*C))) #example axis titles with subscripts, etc
+
+#4. Axis scales and breaks
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = "Flipper Length (mm)", x = "Body Mass (kg)")+
+  scale_y_continuous(limits = c(160, 240), breaks = c(160, 180, 200, 220, 240))+
+  scale_x_continuous(limits = c(2.5,6.5))
+
+#5. Colors!! Part 1: R colors
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = "Flipper Length (mm)", x = "Body Mass (kg)")+
+  scale_y_continuous(limits = c(160, 240), breaks = c(160, 180, 200, 220, 240))+
+  scale_x_continuous(limits = c(2.5,6.5))+
+  scale_color_manual(values = c("darkorange", "darkorchid", "cyan4")) #See R colors cheatsheet for color names. Can also use color hex codes here! Match to powerpoint!
+
+#6. Colors!! Part 2: RColorBrewer 
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = "Flipper Length (mm)", x = "Body Mass (kg)")+
+  scale_y_continuous(limits = c(160, 240), breaks = c(160, 180, 200, 220, 240))+
+  scale_x_continuous(limits = c(2.5,6.5))+
+  scale_color_brewer(palette = "Dark2") #see R color cheatseet for palette names OR:
+
+display.brewer.all()
+display.brewer.all(colorblindFriendly = T)
+
+#7. Colors! Part 3: ggsci
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = "Flipper Length (mm)", x = "Body Mass (kg)")+
+  scale_y_continuous(limits = c(160, 240), breaks = c(160, 180, 200, 220, 240))+
+  scale_x_continuous(limits = c(2.5,6.5))+
+  scale_color_npg() #npg = nature publishing group. Also try jco, simpsons, futurama, tron. ALso see "material" 
+ 
+#to view the whole palette and get hex codes, use the "scales" package: 
+
+show_col(pal_npg("nrc")(12))
+show_col(pal_futurama("planetexpress")(12))
+show_col(pal_simpsons("springfield")(12))
+show_col(pal_material("cyan")(10)) 
+
+#8. Adding in regression lines with their corresponing equations, R-squared, and p-values
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = "Flipper Length (mm)", x = "Body Mass (kg)")+
+  scale_y_continuous(limits = c(160, 240), breaks = c(160, 180, 200, 220, 240))+
+  scale_x_continuous(limits = c(2.5,6.5))+
+  scale_color_manual(values = c("darkorange", "darkorchid", "cyan4"))+
+  stat_smooth(method = "lm", se = FALSE, size = 1.5)+
+  #stat_regline_equation(label.x = 4, show.legend = FALSE)+ #this will show the equations of the regression line
+  stat_cor(show.legend = FALSE)
+
+
+#9. Customizing font sizes using the all-powerful theme() function. Make sure this comes AFTER theme_classic, because you are modifying components of this theme
+ggplot(penguins, aes(x = mass_kg, y = flipper, color = species))+ 
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  labs(y = "Flipper Length (mm)", x = "Body Mass (kg)")+
+  scale_y_continuous(limits = c(160, 240), breaks = c(160, 180, 200, 220, 240))+
+  scale_x_continuous(limits = c(2.5,6.5))+
+  scale_color_manual(values = c("darkorange", "darkorchid", "cyan4"))+
+  stat_smooth(method = "lm", se = FALSE, size = 1.5)+
+  stat_cor(show.legend = FALSE)+
+  theme(axis.text.y=element_text(size=20, color= 'black'), 
+        axis.text.x=element_text(size=20, color= 'black'), 
+        axis.line.y=element_line(color = 'black',size=0.5),
+        axis.line.x=element_line(color = 'black',size=0.5),
+        axis.ticks.y=element_line(size=0.5),
+        axis.ticks.x=element_line(size=0),
+        axis.line = element_line(colour = "black"),
+        axis.title.y=element_text(size=20),
+        axis.title.x=element_text(size=20),
+        legend.text = element_text(size = 18),
+        legend.title = element_blank())
+  
+  
+  
+```
+
+For the full suite of theme() customization options, check out https://ggplot2.tidyverse.org/reference/theme.html
+
+A full list of ggpubr functions is available here: http://rpkgs.datanovia.com/ggpubr/reference/index.html
+
+Check out all the ggsci palette options here: https://nanx.me/ggsci/articles/ggsci.html
+
+A fantastic reference for exploring ggplot chart types is available under "chart types" here: https://www.r-graph-gallery.com/ggplot2-package.html
+
+###4. Create a box plot
+####Now we want to visualize how body size differs between the sexes for each species
+
+Default plot:
+```{r}
+
+ggplot(penguins, aes(x = species, y = mass_kg))+
+  geom_boxplot()
+
+```
+
+Fixed up using our new ggplot skills!
+```{r}
+#Option #1: open boxes, data points shown
+ggplot(penguins, aes(x = species, y = mass_kg, color = sex))+
+   geom_boxplot(width = 0.6, size = 1)+
+  geom_point(position = position_dodge(0.6), size = 2, alpha = 0.6)+
+  scale_color_manual(values = c("#EE6C00FF", "#00838EFF"),labels = c("Female", "Male"))+
+  theme_classic()+
+  scale_y_continuous(limits = c(2,6),breaks = c(2,3,4,5,6))+
+  labs(x = "", y = "Mass (kg)")+
+  theme(axis.text.y=element_text(size=20, color= 'black'), 
+        axis.text.x=element_text(size=20, color= 'black'), 
+        axis.line.y=element_line(color = 'black',size=0.5),
+        axis.line.x=element_line(color = 'black',size=0.5),
+        axis.ticks.y=element_line(size=0.5),
+        axis.ticks.x=element_line(size=0),
+        axis.line = element_line(colour = "black"),
+        axis.title.y=element_text(size=20),
+        axis.title.x=element_text(size=20),
+        legend.text = element_text(size = 18),
+        legend.title = element_blank())
+ 
+
+#Option #2: filled boxes, no data points
+ggplot(penguins, aes(x = species, y = mass_kg, fill = sex))+
+   geom_boxplot(width = 0.6, size = 1)+
+  theme_classic()+ 
+  scale_fill_manual(values = c("#EE6C00FF", "#00838EFF"), labels = c("Female", "Male"))+
+  scale_y_continuous(limits = c(2,6.5),breaks = c(2,3,4,5,6))+
+  labs(y = "Mass (kg)", x = "")+
+  stat_compare_means(method = "t.test", label = "p.format")+
+  theme(axis.text.y=element_text(size=20, color= 'black'),
+        axis.text.x=element_text(size=20, color= 'black'), 
+        axis.line.y=element_line(color = 'black',size=0.5),
+        axis.line.x=element_line(color = 'black',size=0.5),
+        axis.ticks.y=element_line(size=0.5),
+        axis.ticks.x=element_line(size=0),
+        axis.line = element_line(colour = "black"),
+        axis.title.y=element_text(size=20),
+        axis.title.x=element_text(size=20),
+        legend.text = element_text(size = 18),
+        legend.title = element_blank())
+        #legend.position = "top") or "none"
+ 
+
+```
+
+###5. Create a point range plot 
+####For this plot, we will add points that represent mean values with error bars showing +/- standard error. We will then layer on a line plot to connet the points to show change over time.
+
+Note: This dataset does not show strong changes over time (there are only 3 years of data) so this plot does not look very exciting. However, layering these 2 plot types can be a great way to visualize changes in mean values over time.
+```{r}
+
+penguin_means <- penguins %>% 
+  group_by(species, year) %>% 
+  summarise(mean_mass = mean(mass_kg), mean_flipper= mean(flipper), mean_bill_length = mean(bill_length), sd_mass = sd(mass_kg), sem = sd_mass/sqrt(n()))
+
+ggplot(penguin_means)+
+  geom_line(aes(x = year, y = mean_mass, color = species), size =1)+
+  geom_pointrange(aes(x = year, y = mean_mass, ymin = mean_mass - sem, ymax = mean_mass + sem, color = species), size = 1)+
+  #geom_hline(yintercept = 4.5, linetype = "dashed")+ #if you want to add horizontal or vertical lines to indicate means or asymptotes
+  #geom_vline(xintercept = 2008, color = "red")+
+   theme_classic()+
+  labs(y = "Body Mass (kg)", x = "Year Sampled")+
+  scale_x_continuous(limits = c(2007, 2009), breaks = c(2007, 2008, 2009))+
+  scale_color_manual(values = c("darkorange", "darkorchid", "cyan4"))+
+  theme(axis.text.y=element_text(size=20, color= 'black'), 
+        axis.text.x=element_text(size=20, color= 'black'), 
+        axis.line.y=element_line(color = 'black',size=0.5),
+        axis.line.x=element_line(color = 'black',size=0.5),
+        axis.ticks.y=element_line(size=0.5),
+        axis.ticks.x=element_line(size=0),
+        axis.line = element_line(colour = "black"),
+        axis.title.y=element_text(size=20),
+        axis.title.x=element_text(size=20),
+        legend.text = element_text(size = 18),
+        legend.title = element_blank())
+  
+  
+```
+
+
+BONUS: Inset plots!! patchwork::inset_element is a BRAND NEW function that allows you to create an inset plot within your main plot. 
+
+A Messy Example:
+```{r}
+library(patchwork)
+
+plot2 <- ggplot(penguins, aes(x = species, y = bill_ratio, fill = sex))+
+  geom_boxplot()+
+  theme_classic()+
+ theme(legend.position = "none")
+
+ggplot(penguins, aes(x = bill_length, y = bill_depth, color = species))+
+  geom_point(alpha = 0.8, size = 2)+
+  theme_classic()+
+  scale_color_manual(values = c("darkorange", "darkorchid", "cyan4"))+
+  stat_smooth(method = "lm", se = FALSE, size = 1.5)+
+  inset_element(plot2, 0.6, 0.6, 1, 1, align_to = "full")
+
+```
+
