@@ -40,3 +40,5 @@ Week 12: ["shiny" tutorial](https://vimeo.com/473515014) - this week's script is
 Week 13: [GitHub tutorial](https://vimeo.com/478095078) - no script
 
 Week 14: [Generalized linear models](https://vimeo.com/478097567)
+
+Week 15: Fun with "ggplot": Part III
