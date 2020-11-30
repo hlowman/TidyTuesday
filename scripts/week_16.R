@@ -1,7 +1,8 @@
 # Tidy Tuesday - November 24,2020
 # Southern California Coastal Water Research Project
 # "fun with ggplot" Hacky Hour
-# Code contributed by: Annie Holt, Dana Schulz, Jayme Smith, Karen McLaughlin, Heili Lowman
+# Code contributed by: Annie Holt, Dana Schulz, Jayme Smith, 
+# Karen McLaughlin, Wayne Lao, Heili Lowman
 
 # Load necessary packages.
 library(palmerpenguins) # for data
@@ -51,10 +52,20 @@ ratio_log <- ggplot(penguins_data,aes(x=flipper,y=mass_kg, color = species)) +
 
 ratio_log
 
-# Bar Plot ----------------------------------------------------------------
+# Bar Plots ----------------------------------------------------------------
 
 # Read in our "penguins" dataset
 penguins <- palmerpenguins::penguins 
+
+# Make a plot of bill length with bars representing counts and colored by sex
+bill_length <- ggplot(penguins, aes(bill_length_mm)) + 
+  geom_bar(aes(fill = sex)) +
+  labs(x = "Bill Length (mm)",
+    y = "Penguin Count",
+    fill = "Sex") +
+  theme_classic()
+
+bill_length
 
 # Make a graph of body mass by species and sex
 penguins2 <- penguins %>% 
