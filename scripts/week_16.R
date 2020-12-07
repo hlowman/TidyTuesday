@@ -11,6 +11,7 @@ library(plotly) # for interactive plot creation
 library(rphylopic) # for adding organism silhouettes to plots
 library(scales) # for modify x and y axes
 library(wesanderson) # for color palette
+library(gganimate) # for animated plot
 
 # If you don't currently have one of the above packages, 
 # you can install them by running the following in your console:
@@ -171,6 +172,31 @@ p2
 
 # Create interactive plotly plot
 ggplotly(p2)
+
+
+# Animated Plot -----------------------------------------------------------
+
+# Load dataset.
+
+penguins <- palmerpenguins::penguins
+
+# Create simple ggplot for sex and body mass
+
+p <- ggplot(penguins, aes(x = sex, y = body_mass_g)) +
+  geom_point()
+
+# Animated plot of sex and body mass - changing by year
+
+anim <- p +
+  transition_states(year,
+    transition_length = 2, 
+    state_length = 1) + ggtitle('Now showing {closest_state}',
+      subtitle = 'Frame {frame} of {nframes}')
+
+anim
+
+#Helpful link for using gganimate: 
+# https://gganimate.com/articles/gganimate.html
 
 # Histogram ---------------------------------------------------------------
 
