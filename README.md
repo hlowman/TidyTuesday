@@ -47,4 +47,4 @@ Week 16: [Fun with "ggplot": Hacky Hour](https://vimeo.com/485546794)
 
 Week 17: "gt" tutorial
 
-Week 18: Spatial mapping in R
+Week 18: Spatial mapping in R: *sf* and *mapview*
