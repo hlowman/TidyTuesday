@@ -12,7 +12,9 @@ library(palmerpenguins)
 library(tidyverse)
 library(shiny)
 library(shinythemes)
-library(calecopal)
+library(calecopal) # You may need to run library(devtools) following by devtools::install_github("an-bui/calecopal") in your console.
+library(lubridate) # You may need to run install.packages("lubridate") in your console.
+library(ggbeeswarm) # You may need to run install.packages("ggbeeswarm") in your console.
 
 # Load data
 penguins <- palmerpenguins::penguins
@@ -49,13 +51,36 @@ ui <- fluidPage(
       # Text input
       textInput("text", label = h3("Add notes to display here."), value = "Enter text..."),
       
-      # Radio button input/widget
+      # Radio button input - Figure 1
       radioButtons("yradio", label = h3("Figure 1: Choose the boxplot y-axis."),
         choices = list("Bill Length (mm)" = "bill_length_mm", 
           "Bill Depth (mm)" = "bill_depth_mm", 
           "Flipper Length (mm)" = "flipper_length_mm",
           "Body Mass (g)" = "body_mass_g"), 
-        selected = "bill_length_mm")),
+        selected = "bill_length_mm"),
+    
+      # Radio button input - Figure 2
+      radioButtons(inputId = "radGeom", label = h3("Figure 2: Choose your plot type."),
+        choices = c(geom_boxplot = "Boxplot", 
+          geom_violin = "Violinplot",
+          geom_beeswarm = "Beeswarm"), 
+        selected = "Boxplot"),
+    
+      # Dropdown menu (dependent on radio button) - Figure 2
+      conditionalPanel(condition = "input.radGeom == 'Beeswarm'",
+        selectInput(inputId = "HappySad",
+        label = h3("Figure 2: If you chose a 'beeswarm' plot, would you prefer happy, neutral, or sad bees?"),
+        choices = c("smiley" = "happy","frowny" ="sad", "quasirandom" = "neutral"),
+        selected = "happy")),
+    
+      # Slider - Figure 2
+      sliderInput(inputId = "slider",
+        label = h3("Figure 2: Choose the year you would like to display."),
+        min = 2007,
+        max = 2009,
+        step = 1,
+        value = 2007,
+        timeFormat = TRUE)),
     
     # Main panel - outputs will go here
     mainPanel("Outputs:",
@@ -74,10 +99,18 @@ ui <- fluidPage(
       # Divider
       hr(),
       
-      # Plot output
-      plotOutput(outputId = "customplot"))
-  )
-)
+      # Figure 1 output
+      plotOutput(outputId = "plot1"),
+      
+      # Divider
+      hr(),
+      
+      # Figure 2 output
+      plotOutput(outputId = "plot2")
+      
+    ) # closes out mainPanel
+  ) # closes out sidebarLayout
+) # closes out fluidPage
 
 # Remember to always keep track of your parentheses!
 # Be sure to fully close your user interface with parentheses before starting the server code.
@@ -97,13 +130,14 @@ server <- function(input, output){
   # second text output - prints the text provided by the user
   output$value <- renderPrint({paste0(input$text) })
   
-  # ggplot output - uses y-axis chosen by the user
-  output$customplot <- renderPlot({
+  # first ggplot output - uses y-axis chosen by the user
+  output$plot1 <- renderPlot({
 
     penguins %>% # use our original dataset
     mutate(year_f = factor(year)) %>% # make year a factor
     pivot_longer(cols = c(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g),
       names_to = "stats", values_to = "stats_value") %>% # need to pivot to be able to select for y axis
+      # I've pivoted here because it's easier to select from values within a column than select a column itself.
     filter(stats == input$yradio) %>% # filter the new column named "stats" by the user's selection for y axis
     ggplot(aes(x = year_f, y = stats_value)) + # and now create the resulting ggplot
     geom_boxplot(aes(color = island, fill = island), alpha = 0.35) +
@@ -120,7 +154,54 @@ server <- function(input, output){
     guides(color = FALSE, fill = FALSE) +
     facet_grid(~island)
     
-  }) # closes out ggplot output code
+  }) # closes out first ggplot output code
+  
+  # second ggplot output - uses plot type, beeswarm type, and year chosen by user
+  output$plot2 <- renderPlot({
+    
+    # changes type of beeswarm
+    bee.type <- switch(input$HappySad,
+      "happy" 	= "smiley",
+      "sad" = "frowney",
+      "neutral" = "quasirandom")
+    
+    # changes type of plot
+    plot.type <- switch(input$radGeom,
+      "Boxplot" 	= geom_boxplot(alpha = 0.7),
+      "Violinplot" = geom_violin(alpha = 0.7),
+      "Beeswarm" = geom_quasirandom(alpha = 0.7, method = bee.type, groupOnX = TRUE, cex = 2))
+    #groupOnX specifies groups on y axis
+    
+    # assigns year chosen by user
+    yearSlider <- input$slider
+    
+    penguins %>% # uses loaded dataset
+      rename(flipper = flipper_length_mm, bill_length = bill_length_mm, bill_depth = bill_depth_mm) %>% # renames columns
+      mutate(mass_kg = body_mass_g/1000, bill_ratio = bill_length/bill_depth) %>% # creates new body mass column in Kg
+      mutate(yearDate = years(year)) %>% # creates new formatted year column
+      na.omit() %>% # removes NAs
+      filter(year == yearSlider) %>% # filter year by user input
+      ggplot(aes(x = species, y = flipper, color = species)) + # begins the plot code 
+      plot.type + # assigns geometry based on user input
+      labs(y = "Flipper Length (mm)", 
+        x = "Species", 
+        title = "Figure 2: Penguin Stats by Species") +
+      scale_y_continuous(limits = c(160, 240), breaks = c(160, 180, 200, 220, 240)) +
+      scale_color_manual(values = c("darkorange", "darkorchid", "cyan4")) +
+      theme_classic() +
+      theme(axis.text.y=element_text(size=20, color= 'black'), 
+        axis.text.x=element_text(size=20, color= 'black'), 
+        axis.line.y=element_line(color = 'black',size=0.5),
+        axis.line.x=element_line(color = 'black',size=0.5),
+        axis.ticks.y=element_line(size=0.5),
+        axis.ticks.x=element_line(size=0),
+        axis.line = element_line(colour = "black"),
+        axis.title.y=element_text(size=20),
+        axis.title.x=element_text(size=20),
+        legend.text = element_text(size = 18),
+        legend.title = element_blank())
+    
+  }) # closes out second ggplot output code
   
 } # closes out server
 
