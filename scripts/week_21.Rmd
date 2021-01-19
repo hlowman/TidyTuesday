@@ -1,0 +1,169 @@
+
+---
+title: "leaflet tutorial"
+author: "Maggie Klope"
+date: "1/12/2021"
+output: html_document
+---
+
+## Leaflet: Easily create interactive maps
+
+- Uses the [Leaflet](https://leafletjs.com/index.html) open-source JavaScript library
+- Quick way to make interactive maps
+- Can be embedded into R Markdown and Shiny apps
+- Compatible with a lot of data types (data frames with lat/long columns, sp and sf package spatial objects)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# install packages if you have not already
+# install.packages("tidyverse")
+# install.packages("leaflet")
+# install.packages("leaflet.minicharts")
+# install.packages("sf")
+
+library(tidyverse)
+library(leaflet)
+library(leaflet.minicharts)
+library(sf)
+
+```
+
+### Basic Map with one point
+```{r}
+
+# Using the lat/long for the Methuselah Tree (oldest non-clonal tree in the world!)
+methuselah <- leaflet() %>% # using the '%>%' pipe from tidyverse
+  addTiles() %>% # loads default baselayer map
+  addMarkers(lat = 37.379444, 
+             lng = -118.161667, 
+             label = "Oldest Tree!",
+             popup = "Methuselah Tree") # popup will add a small window that appear over the point
+
+methuselah
+
+# adding more features
+methuselah %>% 
+  addProviderTiles(providers$Esri.WorldStreetMap) %>% # changes basemap
+  addMiniMap() %>% # add in a second zoomed out map %>% 
+  addScaleBar()
+
+# lots of different privider tiles: https://leaflet-extras.github.io/leaflet-providers/preview/
+methuselah %>% addProviderTiles(providers$Esri.WorldImagery)
+
+methuselah %>% addProviderTiles(providers$Stamen.Watercolor)
+  
+```
+
+### Using shapefile
+
+- Audubon Society occurrence surveys
+- Includes a count of sensitive and threatened species
+- Assigns a Score value for the taxa that exceed the population threshold of 1% of global or 10% of state population
+
+```{r}
+
+# use sf to read the shapefile
+birds <- st_read("ds78.shp") %>% 
+  filter(LONGITUDE != 0.0000) %>%  # removing a few data points that were missing lat/long
+  filter(REGION == "Southwest")
+
+# creating a point map
+bird_map <- leaflet(data = birds) %>% 
+  addTiles() %>% 
+  addMarkers(lat = birds$LATITUDE, lng = birds$LONGITUDE)
+
+```
+
+### Creating a cluster map
+```{r}
+leaflet(data = birds) %>%
+  addTiles() %>%
+  addMarkers(lat = birds$LATITUDE, 
+             lng = birds$LONGITUDE,
+             clusterOptions = markerClusterOptions(),
+             label = birds$NAME)
+
+```
+
+### Creating custom icons
+```{r}
+
+# making a dataset for locations where brown pelicans (BRPN) were detected
+pelicans <- birds %>% 
+  filter(BRPN == "Y") # filtering where the BRPN column has a "Y" for yes
+
+# using the makeIcon() function to load a .png file
+pelican_icon <- makeIcon(iconUrl = "pelican.png", iconHeight = 20, iconWidth = 20)
+
+leaflet(data = pelicans) %>% 
+  addTiles() %>% 
+  addMarkers(lat = pelicans$LATITUDE, 
+             lng = pelicans$LONGITUDE, 
+             icon = pelican_icon) # setting the icon argument to the png that we loaded
+
+```
+
+### Using the leaflet.minicharts package, you can add figures over your map	
+```{r}	
+bird_matrix <- as.tibble(birds)
+
+# adding barcharts	
+leaflet(data = bird_matrix) %>% 	
+  addTiles() %>% 	
+  addMinicharts(	
+    lng = bird_matrix$LONGITUDE,	
+    lat = bird_matrix$LATITUDE,	
+    chartdata = bird_matrix[, c("SCORE", "THREAT")],	
+    type = "bar") # just using the Score and Threat columns	
+
+# adding piecharts	
+leaflet(data = bird_matrix) %>% 	
+  addTiles() %>% 	
+  addMinicharts(	
+    lng = bird_matrix$LONGITUDE,	
+    lat = bird_matrix$LATITUDE,	
+    chartdata = bird_matrix[, c("SCORE", "THREAT")],	
+    type = "pie")	
+
+# adding label	
+leaflet(data = bird_matrix) %>% 	
+  addTiles() %>% 	
+  addMinicharts(	
+    lng = bird_matrix$LONGITUDE,	
+    lat = bird_matrix$LATITUDE,	
+    chartdata = bird_matrix$SCORE,	
+    showLabels = TRUE)	
+```	
+
+### Maps with Polylines	
+
+```{r}	
+# loading example dataset from the leaflet package	
+storm_data <- atlStorms2005	
+
+# Create a continuous palette function	
+palette <- colorNumeric(	
+  palette = "Reds",	
+  domain = storm_data$MaxWind)	
+
+# Creating a map
+storm <- leaflet(storm_data) %>% 	
+  addTiles() %>% 	
+  # addPolylines(color = "red") %>% 	
+  addPolylines(color = ~palette(MaxWind), opacity = .5) %>% 	
+  addLegend(pal = palette, values = ~MaxWind, 	
+            title = "Maximum Wind", 	
+            opacity = .5)	
+
+storm	
+
+# some extra features	
+storm %>% 	
+  addGraticule() %>% 	
+  addTerminator()	
+```	
+
+### Compatible with Shiny	
+
+- See the leaflet_shiny_app.R file
