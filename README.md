@@ -9,8 +9,6 @@ This repository houses all materials from the [Southern California Coastal Water
 
 Session recordings may be accessed by clicking on the weeks' hyperlinks below or by visiting [SCCWRP's Vimeo page](https://vimeo.com/sccwrp).
 
-If you would like to be added to the mailing list for this group, please contact me at heilil *at* sccwrp.org with your request.
-
 *Syllabus*
 
 Week 1: [Intro to R](https://vimeo.com/447182978)
