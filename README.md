@@ -37,7 +37,7 @@ Week 11: [*vegan* tutorial](https://vimeo.com/471034228)
 
 Week 12: [*shiny* tutorial](https://vimeo.com/473515014) - this week's script is "app.R"
 
-Week 13: [GitHub tutorial](https://vimeo.com/478095078) - no script
+Week 13: [GitHub tutorial](https://vimeo.com/478095078) - no script, but see [the short guide](https://github.com/hlowman/TidyTuesday/blob/master/resources/Git_GitHub_Guide.pdf)
 
 Week 14: [Generalized linear models](https://vimeo.com/478097567)
 
