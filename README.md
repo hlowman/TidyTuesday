@@ -1,5 +1,5 @@
 # Tidy Tuesday
-This repository houses materials from the [Southern California Coastal Water Research Project's](https://www.sccwrp.org/) Tidy Tuesday R tutorial series.
+[This repository](https://github.com/hlowman/TidyTuesday) houses materials from the [Southern California Coastal Water Research Project's](https://www.sccwrp.org/) Tidy Tuesday R tutorial series.
 
 Please note, that starting in February 2021 (week 23), this repository will instead be maintained by SCCWRP. Please visit [their more recent repository](https://github.com/SCCWRP/TidyTuesday) for additional tutorials.
 
